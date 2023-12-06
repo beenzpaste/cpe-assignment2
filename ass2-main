@@ -1,0 +1,159 @@
+#include <iostream>
+#include "functionHeader.h"
+
+using namespace std;
+
+int main() {
+    
+    int rows=0, cols=0, opt=0;
+    double **arr = NULL;
+    
+    cout << "This program creates a thermal image stored in thermalImg.bmp according to given initial conditions.\n";
+    
+    while (opt != 6){
+        
+        // print menu
+        cout << "Please enter the integer of your desired function below:\n";
+        cout << "(1) Create thermal grid\n";
+        cout << "(2) Set initial side temperatures\n";
+        cout << "(3) Stimulate point in grid\n" ;
+        cout << "(4) Stimulate and calculate thermal distribution\n" ;
+        cout << "(5) Print thermal image\n" ;
+        cout << "(6) Exit program\n" ;
+        cout << "-----------------------------------------------------------\n";
+        
+        // take user's menu choice
+        cin >> opt;
+        
+        // prevent nonnumerical input and resulting infinite loops
+        if (cin.fail()) {
+            cout << "Invalid input. Please enter a valid integer.\n\n";
+            cin.clear();  // clear error state
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');  // remove invalid input
+            continue;  // return to the start of the loop
+        }
+
+        
+        switch (opt){
+            case 1:
+                cout << "Enter desired number of rows: ";
+                cin >> rows;
+                cout << "Enter desired number of columns: ";
+                cin >> cols;
+                
+                // check if input is valid
+                if (cols < 0 || rows < 0){
+                    cout << "Invalid input. Dimensions must be positive integers. ";
+                    break;
+                }
+                
+                // create double pointer holding dynamic 2D array
+                arr = create2DGrid(rows, cols);
+                cout << "Thermal grid successfully created.\n\n";
+                break;
+                
+            case 2:
+                // check if thermal image has been intialized
+                if (arr == NULL){
+                    cout << "Please create a thermal grid first.\n\n";
+                    break;
+                }
+                
+                // store four initial side temps into 1D array
+                int iniTemp[4];
+                cout << "Enter initial temp of top row: ";
+                cin >> iniTemp[0];
+                cout << "Enter initial temp of bottom row: ";
+                cin >> iniTemp[1];
+                cout << "Enter initial temp of left column: ";
+                cin >> iniTemp[2];
+                cout << "Enter initial temp of right column: ";
+                cin >> iniTemp[3];
+                
+                setBoundaryConditions(arr, rows, cols, iniTemp[0], iniTemp[1], iniTemp[2], iniTemp[3]);
+                cout << "Initial border temperatures successfully set.\n\n";
+                
+                break;
+                
+            case 3:
+                // check if thermal image has been intialized
+                if (arr == NULL){
+                    cout << "Please create a thermal grid first.\n\n";
+                    break;
+                }
+                
+                int simRow, simCol, simTemp;
+                
+                cout << "Enter coordinates of desired stimulation point according to printed grid: \n";
+                cout << "Row: ";
+                cin >> simRow;
+                cout << "Column: ";
+                cin >> simCol;
+                
+                // check if coordinates are for interior points
+                if (simRow < 2 || simRow > rows-1 || simCol < 2 || simCol > cols-1){
+                    cout << "Invalid input. You can only stimulate interior points.\n\n";
+                    break;
+                }
+                
+                cout << "Enter desired temperature of stimulation point: ";
+                cin >> simTemp;
+                
+                stimulateGrid (arr, simCol, simRow, simTemp);
+                cout << "Point successfully stimulated.\n\n";
+                
+                break;
+                
+            case 4: {
+                // check if thermal image has been intialized
+                if (arr == NULL){
+                    cout << "Please create a thermal grid first.\n\n";
+                    break;
+                }
+                
+                double tol;
+                cout << "Enter desired tolerance value: ";
+                cin >> tol;
+
+                // check if tolerance value is valid
+                if (tol < 0){
+                    cout << "Invalid input. Tolerance value must be positive. ";
+                    break;
+                }
+
+                stimulateThermalDissipation (arr, rows, cols, tol);
+                
+                cout << "Thermal grid successfully calculated and saved into image file.\n\n";
+                
+                break;}
+                
+                
+            case 5:
+                // check if thermal image has been intialized
+                if (arr == NULL){
+                    cout << "Please create a thermal grid first.\n\n";
+                    break;
+                }
+                
+                displayGrid(arr, rows, cols);
+                cout << endl;
+                break;
+                
+            case 6:
+                cout << "Your program has ended." << endl;
+                // release dynamically created memory before exiting program
+                deleteGrid(arr, rows);
+                exit (-1);
+                
+            default:
+                // rules out invalid opt input
+                cout << "Invalid menu option. ";
+                break;
+        }
+    }
+    
+    // ensures the release of dynamically created memory
+    deleteGrid(arr, rows);
+    
+    return 0;
+}
